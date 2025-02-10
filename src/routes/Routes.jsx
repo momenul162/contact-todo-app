@@ -6,6 +6,7 @@ import { Route, Routes } from "react-router-dom";
 const MainRoutes = () => {
   return (
     <Routes>
+      <Route path="/" element={<Contacts />} />
       <Route path="/contacts" element={<Contacts />} />
       <Route path="/login" element={<LoginForm />} />
       <Route path="/register" element={<Register />} />

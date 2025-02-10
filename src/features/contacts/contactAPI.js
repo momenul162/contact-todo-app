@@ -16,6 +16,7 @@ export const fetchContacts = createAsyncThunk(
 export const postContacts = createAsyncThunk(
   "contacts/postContacts",
   async (contactData, { rejectWithValue }) => {
+    console.log(contactData);
     try {
       const { data } = await baseURL.post(`/contacts`, contactData);
       return data;
@@ -33,6 +34,20 @@ export const removeContactById = createAsyncThunk(
       return id;
     } catch (error) {
       return rejectWithValue(error.response?.data || "Failed to remove contact");
+    }
+  }
+);
+
+export const removeContactByIds = createAsyncThunk(
+  "contacts/removeContactByIds",
+  async (ids, { rejectWithValue }) => {
+    console.log(ids);
+    try {
+      const { data } = await baseURL.delete(`/contacts`, ids);
+      console.log(data);
+      return ids;
+    } catch (error) {
+      return rejectWithValue(error.response?.data || "Failed to remove contacts");
     }
   }
 );

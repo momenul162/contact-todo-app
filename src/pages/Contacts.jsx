@@ -21,20 +21,20 @@ import { useSelector } from "react-redux";
 import { useDispatch } from "react-redux";
 import { useEffect } from "react";
 import { currentProfile } from "@/features/auth/authSlice";
-import { fetchContacts } from "@/features/contacts/contactAPI";
+import { fetchContacts, removeContactByIds } from "@/features/contacts/contactAPI";
 import clsx from "clsx";
-import { CalendarIcon } from "lucide-react";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { format } from "date-fns";
 import { isLast7Days, isToday, normalizeDate } from "@/lib/date-compire";
 import { SkeletonDemo } from "@/components/skeleton/tableSkeleton";
 import CustomRow from "@/components/table-row/custom-table-rou";
 import TablePagination from "@/components/pagination/TablePagination";
+import FilterButtons from "@/components/filter-button/FilterButton";
+import HandleSelection from "@/components/handle-selection/HandleSelection";
+import Swal from "sweetalert2";
 
 const ContactPage = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [filtered, setFiltered] = useState("all");
+  const [selected, setSelected] = useState([]);
   const [status, setStatus] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDate, setSelectedDate] = useState(null);
@@ -55,6 +55,56 @@ const ContactPage = () => {
       setFilteredContacts(contacts);
     }
   }, [contacts]);
+
+  // Function to handle selection of individual checkboxes
+  const handleCheckboxChange = (contactId) => {
+    setSelected((prevSelected) => {
+      if (prevSelected.includes(contactId)) {
+        return prevSelected.filter((id) => id !== contactId);
+      } else {
+        return [...prevSelected, contactId];
+      }
+    });
+  };
+  // Function to toggle all checkboxes
+  const handleSelectAll = (e) => {
+    if (e) {
+      setSelected(contacts.map((contact) => contact._id));
+    } else {
+      setSelected([]);
+    }
+  };
+  const isAllSelected = contacts.length > 0 && selected.length === contacts.length;
+
+  const clearSelections = () => setSelected([]);
+
+  // Delete selected items (this is just a placeholder, you'll need to handle the actual delete logic)
+  const deleteSelected = () => {
+    console.log("Delete selected contacts:", selected);
+    Swal.fire({
+      title: "Are you sure?",
+      text: "You won't be able to revert this!",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, delete it!",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        dispatch(removeContactByIds({ ids: selected }))
+          .unwrap()
+          .then(() => {
+            return Swal.fire({
+              position: "top-center",
+              icon: "success",
+              title: "Contacts deleted successfully",
+              showConfirmButton: false,
+              timer: 2000,
+            });
+          });
+        setSelected([]);
+      }
+    });
+  };
 
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= totalPage) {
@@ -116,7 +166,7 @@ const ContactPage = () => {
     // Apply selected date filter
     if (selectedDate) {
       const normalizedSelectedDate = normalizeDate(selectedDate);
-      filteredData = contacts.filter((contact) => {
+      filteredData = filteredData.filter((contact) => {
         const contactDate = normalizeDate(contact.createdAt);
         return contactDate.getTime() === normalizedSelectedDate.getTime();
       });
@@ -125,10 +175,10 @@ const ContactPage = () => {
     // Apply date filter based on `createdAt`
     if (filterValue === "today") {
       setSelectedDate(null);
-      filteredData = contacts.filter((contact) => isToday(contact.createdAt));
+      filteredData = filteredData.filter((contact) => isToday(contact.createdAt));
     } else if (filterValue === "last7Days") {
       setSelectedDate(null);
-      filteredData = contacts?.filter((contact) => isLast7Days(contact.createdAt));
+      filteredData = filteredData.filter((contact) => isLast7Days(contact.createdAt));
     }
 
     setFilteredContacts(filteredData);
@@ -152,7 +202,10 @@ const ContactPage = () => {
       {/* Main Content */}
       <main className="mt-6 bg-white rounded-md shadow p-4">
         <div className="flex flex-wrap justify-between md:items-center mb-4">
-          <h2 className="text-lg font-semibold">Contact</h2>
+          <div>
+            <h2 className="text-lg font-semibold">Contact</h2>
+            <p className="text-sm text-gray-500 mb-4">Manage all Contacts</p>
+          </div>
           <div className="flex flex-wrap md:flex-nowrap items-center gap-2">
             <form>
               <Input
@@ -195,81 +248,14 @@ const ContactPage = () => {
           </div>
         </div>
         <div className={clsx(isOpen === true ? "block" : "hidden")}>
-          <p className="text-sm text-gray-500 mb-4">Manage all Contacts</p>
-          <div className="md:flex items-center gap-4">
-            <div className="inline-flex rounded-md shadow-sm">
-              <Button
-                onClick={() => performFilter("all")}
-                className={clsx(
-                  "md:h-8 rounded-l-lg",
-                  filtered === "all" ? "bg-gray-600 text-white" : " text-gray-700"
-                )}
-              >
-                All
-              </Button>
-              <Button
-                onClick={() => performFilter("today")}
-                className={clsx(
-                  "md:h-8",
-                  filtered === "today" ? "bg-gray-600 text-white" : " text-gray-700"
-                )}
-              >
-                Today
-              </Button>
-              <Button
-                onClick={() => performFilter("last7Days")}
-                className={clsx(
-                  "md:h-8",
-                  filtered === "last7Days" ? "bg-gray-600 text-white" : " text-gray-700"
-                )}
-              >
-                Last 7 days
-              </Button>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    onClick={() => performFilter("filterByDate")}
-                    variant="outline"
-                    className={clsx(
-                      "md:h-8 rounded-r-lg flex items-center space-x-2",
-                      filtered === "filterByDate" ? "bg-gray-600 text-white" : " text-gray-700"
-                    )}
-                  >
-                    <CalendarIcon className="w-4 h-4" />
-                    <span>{selectedDate ? format(selectedDate, "PPP") : "Select Date Range"}</span>
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={selectedDate}
-                    onSelect={filterByDate}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-            <div className="flex">
-              <Button
-                onClick={() => filterStatus("ACTIVE")}
-                className={clsx(
-                  "md:h-8 rounded-l-lg transition-colors",
-                  status === "ACTIVE" ? "bg-gray-600 text-white" : " text-gray-700"
-                )}
-              >
-                Active
-              </Button>
-              <Button
-                onClick={() => filterStatus("INACTIVE")}
-                className={clsx(
-                  "md:h-8 rounded-r-lg transition-colors",
-                  status === "INACTIVE" ? "bg-gray-600 text-white" : " text-gray-700"
-                )}
-              >
-                Inactive
-              </Button>
-            </div>
-          </div>
+          <FilterButtons
+            filtered={filtered}
+            filterStatus={filterStatus}
+            performFilter={performFilter}
+            selectedDate={selectedDate}
+            status={status}
+            filterByDate={filterByDate}
+          />
         </div>
 
         {/* Table */}
@@ -277,7 +263,7 @@ const ContactPage = () => {
           <TableHeader>
             <TableRow>
               <TableHead>
-                <Checkbox />
+                <Checkbox checked={isAllSelected} onCheckedChange={handleSelectAll} />
               </TableHead>
               <TableHead>Name</TableHead>
               <TableHead>Email</TableHead>
@@ -302,7 +288,14 @@ const ContactPage = () => {
                 </TableCell>
               </TableRow>
             ) : (
-              filteredContacts.map((contact) => <CustomRow key={contact._id} contact={contact} />)
+              filteredContacts.map((contact) => (
+                <CustomRow
+                  key={contact._id}
+                  contact={contact}
+                  selected={selected}
+                  handleCheckboxChange={handleCheckboxChange}
+                />
+              ))
             )}
           </TableBody>
         </Table>
@@ -311,12 +304,23 @@ const ContactPage = () => {
         <TablePagination
           contacts={contacts}
           currentPage={currentPage}
+          selected={selected}
           totalPage={totalPage}
           limit={limit}
           handleLimitChange={handleLimitChange}
           handlePageChange={handlePageChange}
         />
       </main>
+      {/* Selection Dialog */}
+      {selected.length > 0 && (
+        <div className="container mx-auto">
+          <HandleSelection
+            selected={selected}
+            clearSelections={clearSelections}
+            deleteSelected={deleteSelected}
+          />
+        </div>
+      )}
     </div>
   );
 };

@@ -18,7 +18,7 @@ import { Dialog, DialogContent, DialogTitle } from "../ui/dialog";
 import { useState } from "react";
 import { removeContactById } from "@/features/contacts/contactAPI";
 
-const CustomRow = ({ contact }) => {
+const CustomRow = ({ contact, selected, handleCheckboxChange }) => {
   const dispatch = useDispatch();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
@@ -57,7 +57,10 @@ const CustomRow = ({ contact }) => {
   return (
     <TableRow>
       <TableCell>
-        <Checkbox />
+        <Checkbox
+          checked={selected.includes(contact._id)}
+          onCheckedChange={() => handleCheckboxChange(contact._id)}
+        />
       </TableCell>
       <TableCell>{contact.name}</TableCell>
       <TableCell>{contact.email}</TableCell>

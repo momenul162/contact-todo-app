@@ -7,6 +7,7 @@ import { ChevronsLeft } from "lucide-react";
 
 const TablePagination = ({
   contacts,
+  selected,
   currentPage,
   handleLimitChange,
   handlePageChange,
@@ -15,7 +16,9 @@ const TablePagination = ({
 }) => {
   return (
     <div className="flex justify-between items-center mt-4">
-      <p className="text-sm text-gray-500">of {contacts.length} Selected</p>
+      <p className="text-sm text-gray-500">
+        {selected.length} of {contacts.length} Selected
+      </p>
 
       <div className="flex items-center space-x-2">
         <Button variant="outline" disabled={currentPage === 1} onClick={() => handlePageChange(1)}>

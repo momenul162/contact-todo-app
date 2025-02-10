@@ -1,6 +1,12 @@
 // src/redux/contactsSlice.js
 import { createSlice } from "@reduxjs/toolkit";
-import { fetchContacts, postContacts, removeContactById, updateContactById } from "./contactAPI";
+import {
+  fetchContacts,
+  postContacts,
+  removeContactById,
+  removeContactByIds,
+  updateContactById,
+} from "./contactAPI";
 
 const initialState = {
   contacts: [],
@@ -61,6 +67,21 @@ const contactsSlice = createSlice({
         state.contacts = state.contacts.filter((contact) => contact._id !== action.payload);
       })
       .addCase(removeContactById.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+      /* Remove contact by ids */
+      .addCase(removeContactByIds.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(removeContactByIds.fulfilled, (state, action) => {
+        state.loading = false;
+        console.log(action.payload);
+        state.contacts = state.contacts.filter((contact) => !action.payload.includes(contact._id));
+      })
+      .addCase(removeContactByIds.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
