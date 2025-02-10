@@ -41,11 +41,12 @@ export const removeContactById = createAsyncThunk(
 export const removeContactByIds = createAsyncThunk(
   "contacts/removeContactByIds",
   async (ids, { rejectWithValue }) => {
-    console.log(ids);
     try {
-      const { data } = await baseURL.delete(`/contacts`, ids);
-      console.log(data);
-      return ids;
+      const { data } = await baseURL(`/contacts`, {
+        method: "delete",
+        data: ids,
+      });
+      return data.data.deleted;
     } catch (error) {
       return rejectWithValue(error.response?.data || "Failed to remove contacts");
     }

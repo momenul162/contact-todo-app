@@ -78,7 +78,6 @@ const contactsSlice = createSlice({
       })
       .addCase(removeContactByIds.fulfilled, (state, action) => {
         state.loading = false;
-        console.log(action.payload);
         state.contacts = state.contacts.filter((contact) => !action.payload.includes(contact._id));
       })
       .addCase(removeContactByIds.rejected, (state, action) => {

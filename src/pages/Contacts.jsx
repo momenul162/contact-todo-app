@@ -78,9 +78,7 @@ const ContactPage = () => {
 
   const clearSelections = () => setSelected([]);
 
-  // Delete selected items (this is just a placeholder, you'll need to handle the actual delete logic)
   const deleteSelected = () => {
-    console.log("Delete selected contacts:", selected);
     Swal.fire({
       title: "Are you sure?",
       text: "You won't be able to revert this!",

@@ -10,6 +10,7 @@ import axios from "axios";
 import { useDispatch } from "react-redux";
 import { currentProfile, loginFailure } from "@/features/auth/authSlice";
 import { useNavigate } from "react-router";
+import { useState } from "react";
 
 // Validation Schema
 const schema = yup.object({
@@ -21,6 +22,7 @@ const schema = yup.object({
 });
 
 const LoginForm = () => {
+  const [loading, setLoading] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const {
@@ -35,6 +37,7 @@ const LoginForm = () => {
   });
 
   const onSubmit = async (formData) => {
+    setLoading(true);
     if (!formData.email && !formData.password) {
       return;
     }
@@ -49,10 +52,12 @@ const LoginForm = () => {
 
         dispatch(currentProfile());
         reset();
+        setLoading(false);
         navigate("/contacts");
       }
     } catch (error) {
       console.log(error);
+      setLoading(false);
       dispatch(loginFailure("Login Failed"));
     }
   };
@@ -111,8 +116,12 @@ const LoginForm = () => {
             </Link>
           </div>
 
-          <Button type="submit" className="w-full h-12 bg-green-600 text-white hover:bg-green-800">
-            Sign In
+          <Button
+            type="submit"
+            disabled={loading}
+            className="w-full h-12 bg-green-600 text-white hover:bg-green-800"
+          >
+            {loading ? "Loading..." : "Sign In"}
           </Button>
         </form>
 

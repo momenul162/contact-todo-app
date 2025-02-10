@@ -6,6 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Link } from "react-router-dom";
+import { useState } from "react";
+import { useDispatch } from "react-redux";
+import { useNavigate } from "react-router";
+import { currentProfile, loginFailure } from "@/features/auth/authSlice";
+import axios from "axios";
 
 // Validation Schema
 const schema = yup.object({
@@ -23,18 +28,50 @@ const schema = yup.object({
 });
 
 const Register = () => {
+  const [loading, setLoading] = useState(false);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
   const {
     register,
     handleSubmit,
     formState: { errors },
     trigger,
+    reset,
   } = useForm({
     resolver: yupResolver(schema),
     mode: "onBlur",
   });
 
-  const onSubmit = (data) => {
-    console.log("Signup Data: ", data);
+  const onSubmit = async (formData) => {
+    const regData = {
+      name: formData.name,
+      email: formData.email,
+      password: formData.password,
+      termsAndConditions: formData.termsAndConditions,
+    };
+    setLoading(true);
+
+    try {
+      const { data } = await axios.post(
+        "http://38.242.131.177:4000/api/v1/auth/registration",
+        regData
+      );
+
+      if (data.code === 200) {
+        localStorage.setItem("access-token", data.data.accessToken);
+
+        localStorage.setItem("refresh-token", data.data.refreshToken);
+
+        dispatch(currentProfile());
+        reset();
+        setLoading(false);
+        navigate("/contacts");
+      }
+    } catch (error) {
+      console.log(error);
+      setLoading(false);
+      dispatch(loginFailure("Login Failed"));
+    }
   };
 
   return (
@@ -94,7 +131,6 @@ const Register = () => {
             <div className="mb-4">
               <Label htmlFor="confirmPassword">Confirm Password</Label>
               <Input
-                id="confirmPassword"
                 type="password"
                 placeholder="Enter confirm password"
                 {...register("confirmPassword", {
@@ -110,14 +146,23 @@ const Register = () => {
 
           {/* Terms & Conditions */}
           <div className="mb-4 flex items-center gap-2">
-            <input type="checkbox" id="terms" {...register("terms")} className="w-4 h-4" />
+            <input
+              type="checkbox"
+              id="termsAndConditions"
+              {...register("termsAndConditions")}
+              className="w-4 h-4"
+            />
             <Label htmlFor="terms">Accept Terms and Condition</Label>
           </div>
           {errors.terms && <p className="text-red-500 text-sm mb-4">{errors.terms.message}</p>}
 
           {/* Submit Button */}
-          <Button type="submit" className="w-full h-12 bg-green-600 text-white hover:bg-green-800">
-            Sign Up
+          <Button
+            type="submit"
+            disabled={loading}
+            className="w-full h-12 bg-green-600 text-white hover:bg-green-800"
+          >
+            {loading ? "Loading..." : "Sign Up"}
           </Button>
         </form>
 
